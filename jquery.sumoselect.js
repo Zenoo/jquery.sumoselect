@@ -23,6 +23,23 @@
 
   'namespace sumo';
   $.fn.SumoSelect = function (options) {
+    // Extra check for IE compatibility
+    const dispatchEvent = (target, eventName) => {
+      let event;
+      if(typeof(Event) === 'function') {
+          event = new Event(eventName);
+      }else{
+          event = document.createEvent('Event');
+          event.initEvent(eventName, true, true);
+      }
+
+      target.dispatchEvent(event);
+    };
+
+    // missing forEach on NodeList for IE11
+    if (window.NodeList && !NodeList.prototype.forEach) {
+      NodeList.prototype.forEach = Array.prototype.forEach;
+    }
 
     // This is the easiest way to have default options.
     const defaultOptions = {
@@ -80,9 +97,9 @@
 
         createElems () {
           const O = this;
-          const {0: {selectedOptions}} = O.E;
+          const selectedOptions = O.E.find('option:checked');
           O.E.wrap('<div class="SumoSelect" tabindex="0" role="button" aria-expanded="false">');
-          [...selectedOptions].forEach((selectedOption) => { // Fix for IE resetting index to 0 when -1
+          selectedOptions.each((_, selectedOption) => { // Fix for IE resetting index to 0 when -1
             selectedOption.selected = true;
           });
           O.select = O.E.parent();
@@ -419,8 +436,8 @@
 
         callChange () {
           this.E.get().forEach(e => {
-            e.dispatchEvent(new Event('change'));
-            e.dispatchEvent(new Event('click'));
+            dispatchEvent(e, 'change');
+            dispatchEvent(e, 'click');
           });
         },
 
